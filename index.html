@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Authenticator</title>
+    <style>
+        :root {
+            --dark-200: rgb(10, 10, 14);
+            --dark-100: rgb(30, 30, 34);
+            --light: rgb(225, 225, 221);
+
+            --blue: rgb(10, 100, 200);
+            --red: rgb(200, 50, 50);
+            --green: rgb(30, 160, 70);
+        }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0px;
+            background-color: var(--dark-200);
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 260px;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: var(--dark-100);
+        }
+        .container button, input, span {
+            font-family: "Roboto", sans-serif;
+            font-weight: 400;
+            font-size: 16px;
+            font-style: normal;
+            color: var(--light);
+        }
+        .container > button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--blue);
+        }
+        .container > button:hover {
+            opacity: 0.9;
+            cursor: pointer;
+        }
+        .container > button:disabled {
+            opacity: 0.6;
+            cursor: wait;
+        }
+        #qr-code {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 260px;
+            height: 260px;
+            border-radius: 5px;
+            background-color: var(--dark-200);
+        }
+        #qr-code > span {
+            font-weight: 700;
+            font-size: 2.25rem;
+        }
+        #secret-key {
+            width: 100%;
+            padding: 10px 15px;
+            box-sizing: border-box;
+            overflow-wrap: break-word;
+            text-align: center;
+            border-radius: 5px;
+            background-color: var(--dark-200);
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+        .input-container {
+            width: 100%;
+        }
+        #error {
+            display: none;
+            margin-bottom: 5px;
+            font-size: 0.75rem;
+            color: var(--red);
+        }
+        #code {
+            width: 100%;
+            padding: 10px 0px;
+            text-align: center;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--dark-200);
+        }
+        #code:focus {
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="qr-code"><span>QR CODE</span></div>
+        <span id="secret-key">SECRET KEY</span>
+        <button onclick="generate.bind(this)()">Generate</button>
+        <div class="input-container">
+            <span id="error"></span>
+            <input id="code" type="text" placeholder="" maxlength="6" value=""></input>
+        </div>
+        <button onclick="verify.bind(this)()">Verify</button>
+    </div>
+    <script>
+        function generate() {
+            this.disabled = true;
+            fetch('/generate', {
+                method: 'POST'
+            }).then(res => res.json()).then(res => {
+                const qrCode = document.getElementById('qr-code');
+                const secretKey = document.getElementById('secret-key');
+                qrCode.innerHTML = res.qrCodeSVG;
+                secretKey.style.fontSize = '0.75rem';
+                secretKey.textContent = res.secretKey;
+                this.disabled = false;
+            });
+        }
+        function verify() {
+            this.disabled = true;
+            const secretKey = document.getElementById('secret-key');
+            const code = document.getElementById('code');
+            const error = document.getElementById('error');
+            code.style.border = 'none';
+            if (secretKey.textContent === 'SECRET KEY') {
+                error.textContent = 'Secret key must be generated.';
+                error.style.display = 'block';
+                this.disabled = false;
+                return;
+            }
+            if (code.value.length !== 6 || !Number.isSafeInteger(Number(code.value))) {
+                error.textContent = 'Code must be 6 digits.';
+                error.style.display = 'block';
+                this.disabled = false;
+                return;
+            }
+            error.style.display = 'none';
+            fetch('/verify', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify({
+                    secretKey: secretKey.textContent,
+                    code: code.value
+                })
+            }).then(res => res.json()).then(res => {
+                code.style.border = 'solid 1px var(--' + (res.matches ? 'green' : 'red') + ')';
+                this.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
