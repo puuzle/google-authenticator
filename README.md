@@ -1,4 +1,6 @@
 # Google Authenticator
+Developed by **Sam Farris**
+
 This project aims to create a library that implements functionality for Google Authenticator and other TOTP based authenticator apps. The library will provide core features for generating secret keys, creating QR codes, and verifying time-based one-time passwords (TOTP). A basic web interface will demonstrate the library's capabilites.
 ## Library Features
 ### Secret Key Generation
