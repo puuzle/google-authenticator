@@ -32,10 +32,10 @@ export class TOTP {
             ascii,
             base32,
             //https://github.com/google/google-authenticator/wiki/Key-Uri-Format#parameters
-            otpauth_url: TOTP_URL + this.options.name + '?secret=' + base32 + (ALGORITHM === 'SHA1' ? '' : ('&algorithm=' + ALGORITHM))
+            url: TOTP_URL + this.options.name + '?secret=' + base32 + (ALGORITHM === 'SHA1' ? '' : ('&algorithm=' + ALGORITHM))
         }
     }
-    async matches(code: string, secretKey: string, encoding: Encoding = 'ascii'): Promise<boolean> {
+    async matches(code: string, secretKey: string | Uint8Array, encoding: Encoding = 'ascii'): Promise<boolean> {
         const time = Math.floor(TOTP.currentTimestamp() / 30);
         let counter = time;
         counter -= WINDOW;
@@ -46,7 +46,9 @@ export class TOTP {
                 buffer[7 - i] = temp & BIT_MASK.ALL_8;
                 temp = temp >> 8;
             }
-            const key = await crypto.subtle.importKey('raw', encoding === 'ascii' ? this.util.toBuffer(secretKey) : this.util.toAscii(secretKey), { name: 'HMAC', hash: ALGORITHM }, false, [ 'sign' ]);
+            const key = await crypto.subtle.importKey('raw', encoding === 'ascii'
+                ? (typeof secretKey === 'string' ? this.util.toBuffer(secretKey) : secretKey)
+                : this.util.toAscii(secretKey), { name: 'HMAC', hash: ALGORITHM }, false, [ 'sign' ]);
             const serverSignature = await crypto.subtle.sign('HMAC', key, buffer);
             const codeBuffer = new Uint8Array(serverSignature);
             if (codeBuffer.length < 5) return false;

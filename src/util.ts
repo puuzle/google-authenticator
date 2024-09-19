@@ -10,11 +10,11 @@ export const util: Util = {
         let carry = 0;
         for (let i = 0; i < base32.length; i++) {
             //NOTE: non-null assertion because never reassigning "i"
-            const char = base32[i]!;
-            if (char === '=') continue;
+            const byte = base32[i]!;
+            if (byte === '=') continue;
             //NOTE: reflect get to allow any character to be used in the key
-            const value = Reflect.get(BASE32.CHAR_MAP, char);
-            if (value === undefined) throw new Error(`Character (${char}) is not a key in BASE32.CHAR_MAP object.`);
+            const value = typeof byte === 'string' ? Reflect.get(BASE32.CHAR_MAP, byte) : byte;
+            if (value === undefined) throw new Error(`Byte (${byte}) is not a key in BASE32.CHAR_MAP object.`);
             const symbol = value & BIT_MASK.ALL_8;
             shift -= 5;
             if (shift > 0) {

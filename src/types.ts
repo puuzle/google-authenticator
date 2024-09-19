@@ -3,7 +3,7 @@ export type Encoding = 'ascii' | 'base32';
 export interface SecretKey {
     ascii: string;
     base32: string;
-    otpauth_url: string;
+    url: string;
 }
 
 export interface TOTPOptions {
@@ -12,7 +12,7 @@ export interface TOTPOptions {
 }
 
 export interface Util {
-    toAscii(base32: string): Uint8Array;
+    toAscii(base32: string | Uint8Array): Uint8Array;
     toBase32(ascii: string): string;
     toBuffer(ascii: string): Uint8Array;
 }

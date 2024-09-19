@@ -29,7 +29,7 @@ Bun.serve({
         if (req.method === 'POST') {
             if (req.url === this.url.href + 'generate') {
                 const secretKey = totp.generateSecretKey();
-                const result = qrCode.generate(secretKey.otpauth_url);
+                const result = qrCode.generate(secretKey.url);
                 return new Response(JSON.stringify({
                     qrCodeSVG: qrCode.toSVG(result.frame, result.width, 5),
                     secretKey: secretKey.base32
@@ -40,17 +40,13 @@ Bun.serve({
                 if (!body || typeof body !== 'object') {
                     return new Response('Bad Request Body', { status: 400 });
                 }
-                let secretKey = Reflect.get(body, 'secretKey');
-                if (typeof secretKey !== 'string') {
-                    return new Response('Bad Request Body', { status: 400 });
-                }
-                secretKey = textDecoder.decode(totp.util.toAscii(secretKey));
+                const secretKey = Reflect.get(body, 'secretKey');
                 const code = Reflect.get(body, 'code');
-                if (typeof code !== 'string') {
+                if (typeof secretKey !== 'string' || typeof code !== 'string') {
                     return new Response('Bad Request Body', { status: 400 });
                 }
                 return new Response(JSON.stringify({
-                    matches: await totp.matches(code, secretKey)
+                    matches: await totp.matches(code, secretKey, 'base32')
                 }));
             }
         }
